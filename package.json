@@ -1,0 +1,20 @@
+{
+  "name": "ai-test-page-monorepo",
+  "private": true,
+  "version": "0.0.0",
+  "description": "React 前端 monorepo：pages 放页面应用，components 放可独立构建发布的组件包",
+  "scripts": {
+    "dev": "pnpm --filter \"./components/*\" build && pnpm -r --parallel dev",
+    "build": "pnpm -r build",
+    "build:components": "pnpm --filter \"./components/*\" build",
+    "build:pages": "pnpm --filter \"./pages/*\" build",
+    "preview": "pnpm --filter @ai-test/playground preview",
+    "clean": "pnpm -r exec rm -rf dist"
+  },
+  "devDependencies": {
+    "typescript": "^5.6.0"
+  },
+  "engines": {
+    "node": ">=18"
+  }
+}

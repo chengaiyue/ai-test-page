@@ -1,0 +1,37 @@
+.ai-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 8px 16px;
+  border-radius: 6px;
+  border: 1px solid transparent;
+  font-size: 14px;
+  line-height: 1.5;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.ai-btn--primary {
+  background: #1677ff;
+  color: #fff;
+}
+
+.ai-btn--primary:hover {
+  background: #4096ff;
+}
+
+.ai-btn--default {
+  background: #fff;
+  color: #333;
+  border-color: #d9d9d9;
+}
+
+.ai-btn--default:hover {
+  color: #1677ff;
+  border-color: #1677ff;
+}
+
+.ai-btn:disabled {
+  cursor: not-allowed;
+  opacity: 0.6;
+}
