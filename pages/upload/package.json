@@ -1,0 +1,12 @@
+{
+  "name": "@ai-test/upload-page",
+  "private": true,
+  "version": "0.0.0",
+  "type": "module",
+  "description": "文件上传页面（antd）：选择/拖拽文件，点击确定上传到后端",
+  "scripts": {
+    "dev": "vite --config ../../build/vite.page.mjs",
+    "build": "tsc --noEmit && vite build --config ../../build/vite.page.mjs",
+    "preview": "vite preview --config ../../build/vite.page.mjs"
+  }
+}

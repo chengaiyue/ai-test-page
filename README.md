@@ -26,12 +26,18 @@ React + TypeScript 前端 monorepo，基于 **pnpm workspaces** 管理。
 │   │   └── package.json         #   包元信息 + peerDeps（react），无本地 devDeps
 │   └── input/                   # @ai-test/input（结构同上）
 └── pages/
-    └── playground/              # @ai-test/playground（Vite 应用，private）
+    ├── playground/              # @ai-test/playground（组件演示页）
+    │   ├── index.html
+    │   ├── src/                 # 页面源码 + app.scss，以 workspace:* 消费组件
+    │   ├── tsconfig.json        # 薄壳：{ "extends": "../../tsconfig.base.json" }
+    │   └── package.json         # 声明 workspace 组件依赖
+    └── upload/                  # @ai-test/upload-page（antd 文件上传页）
         ├── index.html
-        ├── src/                 # 页面源码 + app.scss，以 workspace:* 消费组件
-        ├── tsconfig.json        # 薄壳：{ "extends": "../../tsconfig.base.json" }
-        └── package.json         # 仅声明 workspace 组件依赖
+        └── src/                 # App.tsx：Upload.Dragger 选文件 + 确定提交
 ```
+
+> 页面统一用 **antd** 构建 UI（antd / @ant-design/icons 已在根 devDependencies 统一管理，
+> React 19 下页面入口先 `import '@ant-design/v5-patch-for-react-19'`）。
 
 子包脚本通过相对路径引用根目录的共享配置：
 
@@ -157,10 +163,44 @@ import './app.scss'                // 页面自己的 SCSS，Vite 直接编译
 ## 新增一个页面
 
 1. 建目录 `pages/<name>/`，放 `index.html` 和 `src/`
-2. 加 `package.json`（复制 playground，scripts 引用根 vite 配置），
-   `dependencies` 写需要的 `"@ai-test/xxx": "workspace:*"`
+2. 加 `package.json`（参考现有页面，scripts 引用根 vite 配置）；
+   用到自研组件时 `dependencies` 写 `"@ai-test/xxx": "workspace:*"`，
+   antd 等通用库无需在子包声明（根已统一提供）
 3. 加 `tsconfig.json`：`{ "extends": "../../tsconfig.base.json", "include": ["src"] }`
 4. `pnpm install && pnpm --filter <包名> dev`
+
+## 文件上传页（pages/upload）
+
+`@ai-test/upload-page` 用 antd 的 `Upload.Dragger` 实现：点击/拖拽多选文件 →
+列表展示（可移除/清空）→ 点击**确定**用 `FormData + fetch` 统一 POST 到后端。
+
+关键实现：
+
+- `beforeUpload` 返回 `false`，阻止 antd 选择后立即上传，改为手动点确定提交
+- 提交字段名 `files`（多文件，`multipart/form-data`），后端按此接收
+- React 19 下入口先 `import '@ant-design/v5-patch-for-react-19'`
+
+**对接你的后端**——修改 `pages/upload/src/App.tsx` 顶部的地址：
+
+```ts
+const UPLOAD_URL = '/api/upload'   // 改成你的上传接口
+```
+
+- 同域/走网关：保持相对路径即可。
+- 独立后端（跨域）：在 `build/vite.page.mjs` 的 dev 配置里加代理，
+  前端仍用相对路径，由 Vite 转发，规避跨域：
+
+  ```js
+  server: {
+    proxy: {
+      '/api': { target: 'http://your-backend:8080', changeOrigin: true },
+    },
+  }
+  ```
+
+- 生产环境由部署侧网关/nginx 做同样的转发。
+
+启动：`pnpm --filter @ai-test/upload-page dev`（默认 http://localhost:5173）。
 
 ## 发布组件包
 
