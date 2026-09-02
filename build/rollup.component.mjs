@@ -35,10 +35,14 @@ export default {
       use: ['sass'],
       sourceMap: true,
     }),
-    // TS/TSX 转译 + 生成 .d.ts（声明文件输出到各包 dist/）
+    // TS/TSX 转译 + 生成 .d.ts（声明文件输出到各包 dist/）。
+    // 组件库特有的 emit 选项在此声明，tsconfig 全仓共用一份（tsconfig.base.json）。
     typescript({
       tsconfig: resolve(pkgDir, 'tsconfig.json'),
       compilerOptions: {
+        noEmit: false,
+        declaration: true,
+        emitDeclarationOnly: true,
         outDir: resolve(pkgDir, 'dist'),
         rootDir: resolve(pkgDir, 'src'),
       },

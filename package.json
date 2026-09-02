@@ -6,6 +6,7 @@
   "scripts": {
     "dev": "pnpm build:components && pnpm -r --parallel dev",
     "build": "pnpm -r build",
+    "build:select": "node scripts/build.mjs",
     "build:components": "pnpm --filter \"./components/*\" build",
     "build:pages": "pnpm --filter \"./pages/*\" build",
     "preview": "pnpm --filter @ai-test/playground preview",

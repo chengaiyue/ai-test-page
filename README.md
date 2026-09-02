@@ -13,23 +13,23 @@ React + TypeScript 前端 monorepo，基于 **pnpm workspaces** 管理。
 .
 ├── pnpm-workspace.yaml          # workspace 声明：pages/* 与 components/*
 ├── package.json                 # 根工程（private）：统一脚本 + 全部通用依赖
-├── tsconfig.base.json           # TS 基础配置（编译选项）
-├── tsconfig.components.json     # 组件库 TS 配置（产出 .d.ts），组件包 extends 它
-├── tsconfig.pages.json          # 页面 TS 配置（仅类型检查），页面包 extends 它
+├── tsconfig.base.json           # 唯一的 TS 配置，所有子包都 extends 它
 ├── build/
 │   ├── rollup.component.mjs     # 所有 components/* 共用的 Rollup 构建配置
 │   └── vite.page.mjs            # 所有 pages/* 共用的 Vite 配置
+├── scripts/
+│   └── build.mjs                # 选择性构建：交互/关键字选包 + 依赖影响面分析
 ├── components/
 │   ├── button/                  # @ai-test/button（独立发包）
 │   │   ├── src/                 #   Button.tsx / button.scss / index.ts
-│   │   ├── tsconfig.json        #   薄壳：{ "extends": "../../tsconfig.components.json" }
+│   │   ├── tsconfig.json        #   薄壳：{ "extends": "../../tsconfig.base.json" }
 │   │   └── package.json         #   包元信息 + peerDeps（react），无本地 devDeps
 │   └── input/                   # @ai-test/input（结构同上）
 └── pages/
     └── playground/              # @ai-test/playground（Vite 应用，private）
         ├── index.html
         ├── src/                 # 页面源码 + app.scss，以 workspace:* 消费组件
-        ├── tsconfig.json        # 薄壳：{ "extends": "../../tsconfig.pages.json" }
+        ├── tsconfig.json        # 薄壳：{ "extends": "../../tsconfig.base.json" }
         └── package.json         # 仅声明 workspace 组件依赖
 ```
 
@@ -92,10 +92,39 @@ pnpm dev              # 启动 pages 开发服务（Vite，默认 http://localho
 | 命令 | 作用 |
 | --- | --- |
 | `pnpm build` | 构建所有包（组件 + 页面） |
+| `pnpm build:select` | **交互式选择**构建哪些包，并分析依赖影响面（见下） |
 | `pnpm build:components` | 只构建 components 下所有组件 |
 | `pnpm build:pages` | 只构建 pages 下所有应用 |
 | `pnpm dev` | 先构建组件，再并行启动各包 dev |
 | `pnpm --filter <pkg> <script>` | 对单个包执行脚本 |
+
+### 选择性构建 & 依赖影响分析
+
+`pnpm build:select`（底层 `scripts/build.mjs`）解决「改了一个组件，该构建谁」：
+
+```bash
+pnpm build:select                # 弹出菜单：全部 / 仅组件 / 仅页面 / 手动勾选
+pnpm build:select button         # 按关键字预选包（匹配包名或目录名）
+pnpm build:select button -y      # 预选并自动连带构建受影响的下游包，无需逐项确认
+pnpm build:select button --no-downstream   # 只构建所选，不连带下游
+```
+
+脚本读取 workspace 依赖图，自动处理两件事：
+
+1. **向上补依赖**：构建页面时，自动把它依赖的组件加入计划并排在前面
+   （保证页面拿到最新组件产物）。
+2. **向下找影响**：构建组件时，反查所有依赖它的页面/组件并列出，
+   询问是否连带构建（`-y` 自动连带）。
+
+最终按**拓扑顺序**（被依赖者在前）执行构建。例如改了 button：
+
+```
+⚠ 依赖影响分析：
+  · @ai-test/playground 依赖了所选组件，可能受影响
+构建计划（按依赖顺序）：
+  ▸ @ai-test/button     [components]  (所选包)
+  ▸ @ai-test/playground [pages]       (下游受影响包)
+```
 
 ## 在 pages 中使用组件
 
@@ -114,7 +143,7 @@ import './app.scss'                // 页面自己的 SCSS，Vite 直接编译
 1. 建目录 `components/<name>/src/`，写组件代码并从 `src/index.ts` 导出（样式用 `.scss`）
 2. 加 `package.json`：包名 `@ai-test/<name>`、`exports`/`files` 等元信息、
    `peerDependencies`（react），scripts 直接复制现有组件（引用根 rollup 配置）
-3. 加 `tsconfig.json`：内容为 `{ "extends": "../../tsconfig.components.json", "include": ["src"] }`
+3. 加 `tsconfig.json`：内容为 `{ "extends": "../../tsconfig.base.json", "include": ["src"] }`
 4. 使用方 package.json 加 `"@ai-test/<name>": "workspace:*"`，执行 `pnpm install`
 5. `pnpm --filter @ai-test/<name> build`
 
@@ -130,7 +159,7 @@ import './app.scss'                // 页面自己的 SCSS，Vite 直接编译
 1. 建目录 `pages/<name>/`，放 `index.html` 和 `src/`
 2. 加 `package.json`（复制 playground，scripts 引用根 vite 配置），
    `dependencies` 写需要的 `"@ai-test/xxx": "workspace:*"`
-3. 加 `tsconfig.json`：`{ "extends": "../../tsconfig.pages.json", "include": ["src"] }`
+3. 加 `tsconfig.json`：`{ "extends": "../../tsconfig.base.json", "include": ["src"] }`
 4. `pnpm install && pnpm --filter <包名> dev`
 
 ## 发布组件包
