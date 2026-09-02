@@ -59,21 +59,25 @@ React + TypeScript 前端 monorepo，基于 **pnpm workspaces** 管理。
 
 ## 依赖管理约定
 
-**通用依赖全部放在根 `package.json` 的 `devDependencies`**，子包不再重复声明：
+**通用依赖统一放在根 `package.json`，子包不再重复声明**；按是否进入运行时产物分类：
 
-- 运行时基础库：`react`、`react-dom`（根提供，子包通过 pnpm 提升直接可用）
-- 类型：`@types/react`、`@types/react-dom`
-- 构建工具链：`rollup` 及插件、`vite`、`@vitejs/plugin-react`、`typescript`、`tslib`
-- 样式：`sass`
+- 根 **`dependencies`（运行时，会被 import / 打进产物）**：
+  `react`、`react-dom`、`antd`、`@ant-design/icons`、`@ant-design/v5-patch-for-react-19`
+- 根 **`devDependencies`（仅构建/开发时需要）**：
+  构建工具链 `rollup` 及插件、`vite`、`@vitejs/plugin-react`、`typescript`、`tslib`、
+  样式编译 `sass`、类型 `@types/react`、`@types/react-dom`
 
 子包只声明**各自特有**的依赖：
 
 - **组件包**：只保留 `peerDependencies`（react/react-dom，作为发布元数据告知宿主），
-  不写 `dependencies`/`devDependencies`——工具链与 react 都来自根
-- **页面包**：`dependencies` 里写 `"@ai-test/xxx": "workspace:*"`（组件间引用）
+  不写 `dependencies`/`devDependencies`——工具链与 react 都由根提供
+- **页面包**：`dependencies` 里写 `"@ai-test/xxx": "workspace:*"`（引用自研组件）；
+  antd / react 等通用库直接用根提供的，无需在子包声明
 
-> react 放在根 devDependencies 而非各包：组件库需要 react 做类型/peer 解析，
-> 页面需要 react 做运行时，一处声明全仓共享；发布时 react 仍是 peerDependency，不会打进产物。
+> 说明：react / antd 这类运行时库放根 `dependencies` 而非 `devDependencies`，
+> 语义上它们是应用运行所需，不是构建工具。根包本身 `private` 不发布，
+> 靠 pnpm 提升让各子包解析到；组件发布时 react 仍是 peerDependency，不会打进产物。
+> 生产环境只安装 dependencies（`pnpm install --prod`）即可运行，工具链不进运行时。
 
 ## 环境要求
 
