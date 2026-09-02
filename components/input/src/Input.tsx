@@ -1,5 +1,5 @@
 import type { InputHTMLAttributes } from 'react'
-import './input.css'
+import './input.scss'
 
 export interface InputProps
   extends Omit<InputHTMLAttributes<HTMLInputElement>, 'size'> {

@@ -1,0 +1,43 @@
+$btn-primary-bg: #1677ff;
+$btn-primary-hover: #4096ff;
+$btn-border: #d9d9d9;
+$btn-text: #333;
+$btn-radius: 6px;
+
+.ai-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 8px 16px;
+  border-radius: $btn-radius;
+  border: 1px solid transparent;
+  font-size: 14px;
+  line-height: 1.5;
+  cursor: pointer;
+  transition: all 0.2s ease;
+
+  &--primary {
+    background: $btn-primary-bg;
+    color: #fff;
+
+    &:hover {
+      background: $btn-primary-hover;
+    }
+  }
+
+  &--default {
+    background: #fff;
+    color: $btn-text;
+    border-color: $btn-border;
+
+    &:hover {
+      color: $btn-primary-bg;
+      border-color: $btn-primary-bg;
+    }
+  }
+
+  &:disabled {
+    cursor: not-allowed;
+    opacity: 0.6;
+  }
+}

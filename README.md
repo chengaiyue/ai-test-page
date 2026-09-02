@@ -2,8 +2,11 @@
 
 React + TypeScript 前端 monorepo，基于 **pnpm workspaces** 管理。
 
-- `pages/` —— 页面应用（Vite + React），不发布
-- `components/` —— 公共组件，**每个组件是一个独立 package，可独立构建、独立版本、独立发包**
+- `pages/` —— 页面应用（**Vite** 打包 + React），不发布
+- `components/` —— 公共组件（**Rollup** 打包，样式用 **SCSS**），**每个组件是一个独立 package，可独立构建、独立版本、独立发包**
+
+构建工具分工：pages 用 Vite（esbuild dev server + Rollup 生产构建），
+components 用 Rollup 直接构建库产物（ESM + CJS + d.ts + 编译后的 CSS）。
 
 ## 目录结构
 
@@ -14,8 +17,8 @@ React + TypeScript 前端 monorepo，基于 **pnpm workspaces** 管理。
 ├── package.json               # 根工程（private），统一编排脚本
 ├── components/
 │   ├── button/                # @ai-test/button（独立发包）
-│   │   ├── src/               #   Button.tsx / button.css / index.ts
-│   │   ├── tsup.config.ts     #   构建配置（ESM + CJS + d.ts + CSS）
+│   │   ├── src/               #   Button.tsx / button.scss / index.ts
+│   │   ├── rollup.config.mjs  #   Rollup 构建（ESM + CJS + d.ts + SCSS→CSS）
 │   │   └── package.json       #   exports/main/module/types + peerDeps(react)
 │   └── input/                 # @ai-test/input（独立发包，结构同上）
 └── pages/
@@ -82,9 +85,14 @@ pnpm 会自动替换为组件包的实际版本号。
 
 组件包约定：
 
-- **构建工具**：tsup（esbuild），产物为 ESM + CJS + `.d.ts` + 独立 CSS
-- **react / react-dom**：声明为 `peerDependencies`，不打进产物
+- **构建工具**：Rollup（`@rollup/plugin-typescript` 转译 TS/TSX 并产出 `.d.ts`，
+  `rollup-plugin-postcss` + `sass` 把 SCSS 编译抽取为独立 `dist/index.css`），
+  产物为 ESM + CJS + `.d.ts` + CSS + sourcemap
+- **样式**：源码用 SCSS（变量、嵌套），发布物是编译后的纯 CSS，
+  消费方 `import '@ai-test/button/style.css'` 即可，无需配置 sass
+- **react / react-dom**：声明为 `peerDependencies` 并在 rollup 中 external，不打进产物
 - **exports**：`.` 导出组件，`./style.css` 导出样式；`files: ["dist"]` 保证只发布产物
+- pages 侧用 Vite，安装 `sass` 后即可直接 `import './app.scss'` 编写页面样式
 
 ## 发布组件包
 
