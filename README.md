@@ -18,7 +18,8 @@ React + TypeScript 前端 monorepo，基于 **pnpm workspaces** 管理。
 │   ├── rollup.component.mjs     # 所有 components/* 共用的 Rollup 构建配置
 │   └── vite.page.mjs            # 所有 pages/* 共用的 Vite 配置
 ├── scripts/
-│   └── build.mjs                # 选择性构建：交互/关键字选包 + 依赖影响面分析
+│   ├── build.mjs                # 选择性构建：交互/关键字选包 + 依赖影响面分析
+│   └── dev.mjs                  # 选择页面启动：构建组件 + 起 vite + 打开浏览器
 ├── components/
 │   ├── button/                  # @ai-test/button（独立发包）
 │   │   ├── src/                 #   Button.tsx / button.scss / index.ts
@@ -105,8 +106,22 @@ pnpm dev              # 启动 pages 开发服务（Vite，默认 http://localho
 | `pnpm build:select` | **交互式选择**构建哪些包，并分析依赖影响面（见下） |
 | `pnpm build:components` | 只构建 components 下所有组件 |
 | `pnpm build:pages` | 只构建 pages 下所有应用 |
+| `pnpm dev:page` | **交互式选择一个页面**，自动构建组件后启动并打开浏览器 |
 | `pnpm dev` | 先构建组件，再并行启动各包 dev |
 | `pnpm --filter <pkg> <script>` | 对单个包执行脚本 |
+
+### 选择页面启动（`pnpm dev:page`）
+
+```bash
+pnpm dev:page                  # 弹出菜单选择要启动哪个页面
+pnpm dev:page upload           # 按关键字直接启动（匹配包名/目录名）
+pnpm dev:page upload --skip-build   # dist 已是最新时跳过启动前的组件构建
+pnpm dev:page upload --no-open      # 启动但不自动打开浏览器
+```
+
+脚本（`scripts/dev.mjs`）会先构建 `components/*`（页面依赖组件产物），再用共享
+Vite 配置启动所选页面，默认加 `--open` 自动打开浏览器（http://localhost:5173）。
+新增页面无需改脚本——自动扫描 `pages/*` 下带 `dev` 脚本的包。
 
 ### 选择性构建 & 依赖影响分析
 

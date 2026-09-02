@@ -5,6 +5,7 @@
   "description": "React 前端 monorepo：pages 放页面应用，components 放可独立构建发布的组件包",
   "scripts": {
     "dev": "pnpm build:components && pnpm -r --parallel dev",
+    "dev:page": "node scripts/dev.mjs",
     "build": "pnpm -r build",
     "build:select": "node scripts/build.mjs",
     "build:components": "pnpm --filter \"./components/*\" build",
