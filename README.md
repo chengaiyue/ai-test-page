@@ -5,26 +5,69 @@ React + TypeScript 前端 monorepo，基于 **pnpm workspaces** 管理。
 - `pages/` —— 页面应用（**Vite** 打包 + React），不发布
 - `components/` —— 公共组件（**Rollup** 打包，样式用 **SCSS**），**每个组件是一个独立 package，可独立构建、独立版本、独立发包**
 
-构建工具分工：pages 用 Vite（esbuild dev server + Rollup 生产构建），
-components 用 Rollup 直接构建库产物（ESM + CJS + d.ts + 编译后的 CSS）。
+设计原则：**配置与通用依赖统一收敛到根目录**，子包只保留自身源码和薄薄的描述文件。
 
 ## 目录结构
 
 ```
 .
-├── pnpm-workspace.yaml        # workspace 声明：pages/* 与 components/*
-├── tsconfig.base.json         # 各包共享的 TS 基础配置
-├── package.json               # 根工程（private），统一编排脚本
+├── pnpm-workspace.yaml          # workspace 声明：pages/* 与 components/*
+├── package.json                 # 根工程（private）：统一脚本 + 全部通用依赖
+├── tsconfig.base.json           # TS 基础配置（编译选项）
+├── tsconfig.components.json     # 组件库 TS 配置（产出 .d.ts），组件包 extends 它
+├── tsconfig.pages.json          # 页面 TS 配置（仅类型检查），页面包 extends 它
+├── build/
+│   ├── rollup.component.mjs     # 所有 components/* 共用的 Rollup 构建配置
+│   └── vite.page.mjs            # 所有 pages/* 共用的 Vite 配置
 ├── components/
-│   ├── button/                # @ai-test/button（独立发包）
-│   │   ├── src/               #   Button.tsx / button.scss / index.ts
-│   │   ├── rollup.config.mjs  #   Rollup 构建（ESM + CJS + d.ts + SCSS→CSS）
-│   │   └── package.json       #   exports/main/module/types + peerDeps(react)
-│   └── input/                 # @ai-test/input（独立发包，结构同上）
+│   ├── button/                  # @ai-test/button（独立发包）
+│   │   ├── src/                 #   Button.tsx / button.scss / index.ts
+│   │   ├── tsconfig.json        #   薄壳：{ "extends": "../../tsconfig.components.json" }
+│   │   └── package.json         #   包元信息 + peerDeps（react），无本地 devDeps
+│   └── input/                   # @ai-test/input（结构同上）
 └── pages/
-    └── playground/            # @ai-test/playground（Vite 应用，private）
-        └── src/               # 通过 workspace:* 依赖消费组件包
+    └── playground/              # @ai-test/playground（Vite 应用，private）
+        ├── index.html
+        ├── src/                 # 页面源码 + app.scss，以 workspace:* 消费组件
+        ├── tsconfig.json        # 薄壳：{ "extends": "../../tsconfig.pages.json" }
+        └── package.json         # 仅声明 workspace 组件依赖
 ```
+
+子包脚本通过相对路径引用根目录的共享配置：
+
+```jsonc
+// components/xxx/package.json
+"scripts": {
+  "build": "rollup -c ../../build/rollup.component.mjs",
+  "dev":   "rollup -c ../../build/rollup.component.mjs -w"
+}
+
+// pages/xxx/package.json
+"scripts": {
+  "dev":   "vite --config ../../build/vite.page.mjs",
+  "build": "tsc --noEmit && vite build --config ../../build/vite.page.mjs"
+}
+```
+
+共享构建配置按**执行时 cwd**（即子包目录）解析入口/输出，所以一份配置即可服务所有同类型子包，无需复制。
+
+## 依赖管理约定
+
+**通用依赖全部放在根 `package.json` 的 `devDependencies`**，子包不再重复声明：
+
+- 运行时基础库：`react`、`react-dom`（根提供，子包通过 pnpm 提升直接可用）
+- 类型：`@types/react`、`@types/react-dom`
+- 构建工具链：`rollup` 及插件、`vite`、`@vitejs/plugin-react`、`typescript`、`tslib`
+- 样式：`sass`
+
+子包只声明**各自特有**的依赖：
+
+- **组件包**：只保留 `peerDependencies`（react/react-dom，作为发布元数据告知宿主），
+  不写 `dependencies`/`devDependencies`——工具链与 react 都来自根
+- **页面包**：`dependencies` 里写 `"@ai-test/xxx": "workspace:*"`（组件间引用）
+
+> react 放在根 devDependencies 而非各包：组件库需要 react 做类型/peer 解析，
+> 页面需要 react 做运行时，一处声明全仓共享；发布时 react 仍是 peerDependency，不会打进产物。
 
 ## 环境要求
 
@@ -40,9 +83,9 @@ pnpm build:components # 先构建组件包（产物在各包 dist/）
 pnpm dev              # 启动 pages 开发服务（Vite，默认 http://localhost:5173）
 ```
 
-> 说明：pages 通过 `workspace:*` 引用组件包的**构建产物**（dist）。
-> 联调组件时可开监听构建：`pnpm --filter @ai-test/button dev`，
-> 组件源码改动会实时重建 dist，页面自动刷新。
+> pages 通过 `workspace:*` 引用组件包的**构建产物**（dist）。
+> 联调组件时开监听构建：`pnpm --filter @ai-test/button dev`，
+> 组件源码改动实时重建 dist，页面自动刷新。
 
 ## 常用命令
 
@@ -59,40 +102,36 @@ pnpm dev              # 启动 pages 开发服务（Vite，默认 http://localho
 ```tsx
 import { Button } from '@ai-test/button'
 import '@ai-test/button/style.css' // 组件样式由组件包以独立产物提供
+import './app.scss'                // 页面自己的 SCSS，Vite 直接编译
 
 <Button variant="primary">按钮</Button>
 ```
 
-依赖写法（pages 的 package.json）：
-
-```json
-{
-  "dependencies": {
-    "@ai-test/button": "workspace:*"
-  }
-}
-```
-
-`workspace:*` 在本地自动软链到 `components/button`；发布 pages 或打包时
-pnpm 会自动替换为组件包的实际版本号。
-
 ## 新增一个组件包
 
-1. 复制 `components/button` 为 `components/<name>`，改包名（如 `@ai-test/<name>`）
-2. 编写 `src/` 下的组件代码，从 `src/index.ts` 导出
-3. 在使用方 package.json 中加 `"@ai-test/<name>": "workspace:*"`，执行 `pnpm install`
-4. `pnpm --filter @ai-test/<name> build`
+无需写任何构建配置，只需：
 
-组件包约定：
+1. 建目录 `components/<name>/src/`，写组件代码并从 `src/index.ts` 导出（样式用 `.scss`）
+2. 加 `package.json`：包名 `@ai-test/<name>`、`exports`/`files` 等元信息、
+   `peerDependencies`（react），scripts 直接复制现有组件（引用根 rollup 配置）
+3. 加 `tsconfig.json`：内容为 `{ "extends": "../../tsconfig.components.json", "include": ["src"] }`
+4. 使用方 package.json 加 `"@ai-test/<name>": "workspace:*"`，执行 `pnpm install`
+5. `pnpm --filter @ai-test/<name> build`
 
-- **构建工具**：Rollup（`@rollup/plugin-typescript` 转译 TS/TSX 并产出 `.d.ts`，
-  `rollup-plugin-postcss` + `sass` 把 SCSS 编译抽取为独立 `dist/index.css`），
-  产物为 ESM + CJS + `.d.ts` + CSS + sourcemap
-- **样式**：源码用 SCSS（变量、嵌套），发布物是编译后的纯 CSS，
-  消费方 `import '@ai-test/button/style.css'` 即可，无需配置 sass
-- **react / react-dom**：声明为 `peerDependencies` 并在 rollup 中 external，不打进产物
-- **exports**：`.` 导出组件，`./style.css` 导出样式；`files: ["dist"]` 保证只发布产物
-- pages 侧用 Vite，安装 `sass` 后即可直接 `import './app.scss'` 编写页面样式
+组件包构建约定（由根 `build/rollup.component.mjs` 统一保证）：
+
+- Rollup 产出 ESM + CJS + `.d.ts` + sourcemap
+- `rollup-plugin-postcss` + `sass` 把 SCSS 编译抽取为独立 `dist/index.css`
+- react/react-dom external，不打进产物
+- 发布物是编译后的纯 CSS，消费方无需配 sass
+
+## 新增一个页面
+
+1. 建目录 `pages/<name>/`，放 `index.html` 和 `src/`
+2. 加 `package.json`（复制 playground，scripts 引用根 vite 配置），
+   `dependencies` 写需要的 `"@ai-test/xxx": "workspace:*"`
+3. 加 `tsconfig.json`：`{ "extends": "../../tsconfig.pages.json", "include": ["src"] }`
+4. `pnpm install && pnpm --filter <包名> dev`
 
 ## 发布组件包
 
@@ -104,7 +143,7 @@ pnpm --filter @ai-test/button version patch   # 或 minor / major
 pnpm --filter @ai-test/button publish
 ```
 
-发包前可本地校验包内容：
+发包前本地校验包内容：
 
 ```bash
 pnpm -C components/button pack

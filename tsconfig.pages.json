@@ -1,0 +1,8 @@
+{
+  "$schema": "https://json.schemastore.org/tsconfig",
+  "extends": "./tsconfig.base.json",
+  "compilerOptions": {
+    // 页面应用：Vite 负责转译打包，TS 只做类型检查
+    "noEmit": true
+  }
+}

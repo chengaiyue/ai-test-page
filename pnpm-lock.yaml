@@ -4,90 +4,59 @@ importers:
 
   .:
     specifiers:
-      typescript: ^5.6.0
-    devDependencies:
-      typescript: 5.9.3
-
-  components/button:
-    specifiers:
       '@rollup/plugin-commonjs': ^28.0.0
       '@rollup/plugin-node-resolve': ^16.0.0
       '@rollup/plugin-typescript': ^12.1.0
-      '@types/react': ^19
-      '@types/react-dom': ^19
-      react: ^19
-      react-dom: ^19
-      rollup: ^4.28.0
-      rollup-plugin-postcss: ^4.0.2
-      sass: ^1.83.0
-      tslib: ^2.8.0
-      typescript: ^5
-    devDependencies:
-      '@rollup/plugin-commonjs': 28.0.9_rollup@4.63.1
-      '@rollup/plugin-node-resolve': 16.0.3_rollup@4.63.1
-      '@rollup/plugin-typescript': 12.3.0_nsp7vrxod6o45d4mvsd2ojrkry
-      '@types/react': 19.2.18
-      '@types/react-dom': 19.2.5_@types+react@19.2.18
-      react: 19.2.8
-      react-dom: 19.2.8_react@19.2.8
-      rollup: 4.63.1
-      rollup-plugin-postcss: 4.0.2_postcss@8.5.26
-      sass: 1.103.1
-      tslib: 2.8.1
-      typescript: 5.9.3
-
-  components/input:
-    specifiers:
-      '@rollup/plugin-commonjs': ^28.0.0
-      '@rollup/plugin-node-resolve': ^16.0.0
-      '@rollup/plugin-typescript': ^12.1.0
-      '@types/react': ^19
-      '@types/react-dom': ^19
-      react: ^19
-      react-dom: ^19
-      rollup: ^4.28.0
-      rollup-plugin-postcss: ^4.0.2
-      sass: ^1.83.0
-      tslib: ^2.8.0
-      typescript: ^5
-    devDependencies:
-      '@rollup/plugin-commonjs': 28.0.9_rollup@4.63.1
-      '@rollup/plugin-node-resolve': 16.0.3_rollup@4.63.1
-      '@rollup/plugin-typescript': 12.3.0_nsp7vrxod6o45d4mvsd2ojrkry
-      '@types/react': 19.2.18
-      '@types/react-dom': 19.2.5_@types+react@19.2.18
-      react: 19.2.8
-      react-dom: 19.2.8_react@19.2.8
-      rollup: 4.63.1
-      rollup-plugin-postcss: 4.0.2_postcss@8.5.26
-      sass: 1.103.1
-      tslib: 2.8.1
-      typescript: 5.9.3
-
-  pages/playground:
-    specifiers:
-      '@ai-test/button': workspace:*
-      '@ai-test/input': workspace:*
       '@types/react': ^19
       '@types/react-dom': ^19
       '@vitejs/plugin-react': ^4.3
       react: ^19
       react-dom: ^19
+      rollup: ^4.28.0
+      rollup-plugin-postcss: ^4.0.2
       sass: ^1.83.0
+      tslib: ^2.8.0
       typescript: ^5
       vite: ^6
-    dependencies:
-      '@ai-test/button': link:../../components/button
-      '@ai-test/input': link:../../components/input
-      react: 19.2.8
-      react-dom: 19.2.8_react@19.2.8
     devDependencies:
+      '@rollup/plugin-commonjs': 28.0.9_rollup@4.63.1
+      '@rollup/plugin-node-resolve': 16.0.3_rollup@4.63.1
+      '@rollup/plugin-typescript': 12.3.0_nsp7vrxod6o45d4mvsd2ojrkry
       '@types/react': 19.2.18
       '@types/react-dom': 19.2.5_@types+react@19.2.18
       '@vitejs/plugin-react': 4.7.0_vite@6.4.3
+      react: 19.2.8
+      react-dom: 19.2.8_react@19.2.8
+      rollup: 4.63.1
+      rollup-plugin-postcss: 4.0.2_postcss@8.5.26
       sass: 1.103.1
+      tslib: 2.8.1
       typescript: 5.9.3
       vite: 6.4.3_sass@1.103.1
+
+  components/button:
+    specifiers:
+      react: '>=18'
+      react-dom: '>=18'
+    dependencies:
+      react: 19.2.8
+      react-dom: 19.2.8_react@19.2.8
+
+  components/input:
+    specifiers:
+      react: '>=18'
+      react-dom: '>=18'
+    dependencies:
+      react: 19.2.8
+      react-dom: 19.2.8_react@19.2.8
+
+  pages/playground:
+    specifiers:
+      '@ai-test/button': workspace:*
+      '@ai-test/input': workspace:*
+    dependencies:
+      '@ai-test/button': link:../../components/button
+      '@ai-test/input': link:../../components/input
 
 packages:
 

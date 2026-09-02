@@ -5,22 +5,12 @@
   "type": "module",
   "description": "页面应用示例：以 workspace 依赖方式消费 components 组件包",
   "scripts": {
-    "dev": "vite",
-    "build": "tsc --noEmit && vite build",
-    "preview": "vite preview"
+    "dev": "vite --config ../../build/vite.page.mjs",
+    "build": "tsc --noEmit && vite build --config ../../build/vite.page.mjs",
+    "preview": "vite preview --config ../../build/vite.page.mjs"
   },
   "dependencies": {
     "@ai-test/button": "workspace:*",
-    "@ai-test/input": "workspace:*",
-    "react": "^19",
-    "react-dom": "^19"
-  },
-  "devDependencies": {
-    "@types/react": "^19",
-    "@types/react-dom": "^19",
-    "@vitejs/plugin-react": "^4.3",
-    "sass": "^1.83.0",
-    "typescript": "^5",
-    "vite": "^6"
+    "@ai-test/input": "workspace:*"
   }
 }
