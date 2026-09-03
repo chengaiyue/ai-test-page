@@ -1,3 +1,24 @@
 packages:
   - 'pages/*'
   - 'components/*'
+
+# 统一依赖版本表：子包用 "catalog:" 引用，版本号只在此处维护一份。
+# 用法：子包 package.json 写 "react": "catalog:"
+catalog:
+  react: ^19.2.8
+  react-dom: ^19.2.8
+  antd: ^5.29.3
+  '@ant-design/icons': ^5.6.1
+  '@ant-design/v5-patch-for-react-19': ^1.0.3
+  '@types/react': ^19.2.18
+  '@types/react-dom': ^19.2.5
+  typescript: ^5.9.3
+  vite: ^6.4.3
+  '@vitejs/plugin-react': ^4.7.0
+  vite-plugin-dts: ^4.5.4
+  sass: ^1.103.1
+  vitest: ^3.2.4
+  '@testing-library/react': ^16.3.0
+  '@testing-library/jest-dom': ^6.6.3
+  jsdom: ^26.1.0
+  tslib: ^2.8.1

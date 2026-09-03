@@ -11,6 +11,12 @@
   },
   "dependencies": {
     "@ai-test/button": "workspace:*",
-    "@ai-test/input": "workspace:*"
+    "@ai-test/input": "workspace:*",
+    "react": "catalog:",
+    "react-dom": "catalog:"
+  },
+  "devDependencies": {
+    "@types/react": "catalog:",
+    "@types/react-dom": "catalog:"
   }
 }

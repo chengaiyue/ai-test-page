@@ -12,10 +12,7 @@ export default function App() {
 
       <h2>@ai-test/button</h2>
       <div className="row" style={{ marginBottom: 24 }}>
-        <Button
-          variant="primary"
-          onClick={() => alert('点击了主要按钮')}
-        >
+        <Button variant="primary" onClick={() => alert('点击了主要按钮')}>
           主要按钮
         </Button>
         <Button>默认按钮</Button>

@@ -76,12 +76,16 @@ if (keywords.length) {
       keywords.some((k) => p.label.includes(k)),
   )
   if (!page) {
-    console.error(`✗ 没有匹配 "${keywords.join(' ')}" 的页面，可选：${pages.map((p) => p.label).join(', ')}`)
+    console.error(
+      `✗ 没有匹配 "${keywords.join(' ')}" 的页面，可选：${pages.map((p) => p.label).join(', ')}`,
+    )
     process.exit(1)
   }
 } else {
   console.log('请选择要启动的页面：')
-  pages.forEach((p, i) => console.log(`  ${i + 1}) ${p.name.padEnd(22)} ${p.label}`))
+  pages.forEach((p, i) =>
+    console.log(`  ${i + 1}) ${p.name.padEnd(22)} ${p.label}`),
+  )
   const raw = await ask('> ')
   page = pages[Number(raw) - 1]
   if (!page) {
@@ -103,8 +107,12 @@ if (!skipBuild) {
 
 // ---------- 启动该页面的 Vite dev server ----------
 const viteArgs = [
-  '--filter', page.name, 'exec', 'vite',
-  '--config', resolve(root, 'build/vite.page.mjs'),
+  '--filter',
+  page.name,
+  'exec',
+  'vite',
+  '--config',
+  resolve(root, 'build/vite.page.mjs'),
 ]
 if (!noOpen) viteArgs.push('--open')
 

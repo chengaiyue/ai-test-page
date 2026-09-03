@@ -23,8 +23,9 @@
     "**/*.scss"
   ],
   "scripts": {
-    "build": "rollup -c ../../build/rollup.component.mjs",
-    "dev": "rollup -c ../../build/rollup.component.mjs -w",
+    "build": "vite build --config ../../build/vite.component.mjs",
+    "dev": "vite build --watch --config ../../build/vite.component.mjs",
+    "test": "vitest run --root ../..",
     "prepublishOnly": "pnpm build"
   },
   "keywords": [

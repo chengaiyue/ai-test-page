@@ -35,9 +35,9 @@ if (argv.includes('-h') || argv.includes('--help')) {
 function loadPackages() {
   const wsText = readFileSync(join(root, 'pnpm-workspace.yaml'), 'utf8')
   // 解析 "- 'pages/*'" 形式的 glob（仅支持 group/* 一层）
-  const globs = [...wsText.matchAll(/^\s*-\s*['"]?([^'"\n#]+?)['"]?\s*$/gm)].map(
-    (m) => m[1],
-  )
+  const globs = [
+    ...wsText.matchAll(/^\s*-\s*['"]?([^'"\n#]+?)['"]?\s*$/gm),
+  ].map((m) => m[1])
 
   const pkgs = []
   for (const glob of globs) {
@@ -226,7 +226,9 @@ if (downstream.size && !noDownstream) {
   for (const name of downstream) {
     console.log(`  · ${name} 依赖了所选组件，可能受影响`)
   }
-  const include = autoYes ? 'Y' : await ask('\n是否连带构建以上受影响的包？(Y=是 / n=否)：')
+  const include = autoYes
+    ? 'Y'
+    : await ask('\n是否连带构建以上受影响的包？(Y=是 / n=否)：')
   if (autoYes || ['', 'y', 'Y'].includes(include)) {
     for (const name of downstream) {
       if (!plan.has(name)) plan.set(name, '下游受影响包')

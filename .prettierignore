@@ -1,0 +1,8 @@
+dist/
+node_modules/
+coverage/
+pnpm-lock.yaml
+components/*/dist/
+pages/*/dist/
+*.d.ts
+CHANGELOG.md

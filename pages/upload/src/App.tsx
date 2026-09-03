@@ -64,9 +64,7 @@ export default function App() {
       title="文件上传"
       style={{ maxWidth: 720, margin: '48px auto' }}
       extra={
-        <span style={{ color: '#999', fontSize: 12 }}>
-          接口：{UPLOAD_URL}
-        </span>
+        <span style={{ color: '#999', fontSize: 12 }}>接口：{UPLOAD_URL}</span>
       }
     >
       {contextHolder}

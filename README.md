@@ -100,15 +100,15 @@ pnpm dev              # 启动 pages 开发服务（Vite，默认 http://localho
 
 ## 常用命令
 
-| 命令 | 作用 |
-| --- | --- |
-| `pnpm build` | 构建所有包（组件 + 页面） |
-| `pnpm build:select` | **交互式选择**构建哪些包，并分析依赖影响面（见下） |
-| `pnpm build:components` | 只构建 components 下所有组件 |
-| `pnpm build:pages` | 只构建 pages 下所有应用 |
-| `pnpm dev:page` | **交互式选择一个页面**，自动构建组件后启动并打开浏览器 |
-| `pnpm dev` | 先构建组件，再并行启动各包 dev |
-| `pnpm --filter <pkg> <script>` | 对单个包执行脚本 |
+| 命令                           | 作用                                                   |
+| ------------------------------ | ------------------------------------------------------ |
+| `pnpm build`                   | 构建所有包（组件 + 页面）                              |
+| `pnpm build:select`            | **交互式选择**构建哪些包，并分析依赖影响面（见下）     |
+| `pnpm build:components`        | 只构建 components 下所有组件                           |
+| `pnpm build:pages`             | 只构建 pages 下所有应用                                |
+| `pnpm dev:page`                | **交互式选择一个页面**，自动构建组件后启动并打开浏览器 |
+| `pnpm dev`                     | 先构建组件，再并行启动各包 dev                         |
+| `pnpm --filter <pkg> <script>` | 对单个包执行脚本                                       |
 
 ### 选择页面启动（`pnpm dev:page`）
 
@@ -156,9 +156,9 @@ pnpm build:select button --no-downstream   # 只构建所选，不连带下游
 ```tsx
 import { Button } from '@ai-test/button'
 import '@ai-test/button/style.css' // 组件样式由组件包以独立产物提供
-import './app.scss'                // 页面自己的 SCSS，Vite 直接编译
+import './app.scss' // 页面自己的 SCSS，Vite 直接编译
 
-<Button variant="primary">按钮</Button>
+;<Button variant="primary">按钮</Button>
 ```
 
 ## 新增一个组件包
@@ -202,7 +202,7 @@ import './app.scss'                // 页面自己的 SCSS，Vite 直接编译
 **对接你的后端**——修改 `pages/upload/src/App.tsx` 顶部的地址：
 
 ```ts
-const UPLOAD_URL = '/api/upload'   // 改成你的上传接口
+const UPLOAD_URL = '/api/upload' // 改成你的上传接口
 ```
 
 - 同域/走网关：保持相对路径即可。

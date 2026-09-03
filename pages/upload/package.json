@@ -8,5 +8,16 @@
     "dev": "vite --config ../../build/vite.page.mjs",
     "build": "tsc --noEmit && vite build --config ../../build/vite.page.mjs",
     "preview": "vite preview --config ../../build/vite.page.mjs"
+  },
+  "dependencies": {
+    "@ant-design/icons": "catalog:",
+    "@ant-design/v5-patch-for-react-19": "catalog:",
+    "antd": "catalog:",
+    "react": "catalog:",
+    "react-dom": "catalog:"
+  },
+  "devDependencies": {
+    "@types/react": "catalog:",
+    "@types/react-dom": "catalog:"
   }
 }
