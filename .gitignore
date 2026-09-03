@@ -1,7 +1,9 @@
 node_modules/
 dist/
+coverage/
 *.local
 *.log
 .DS_Store
 .vite/
 tsconfig.tsbuildinfo
+.changeset/*.md.tmp

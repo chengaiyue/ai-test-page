@@ -25,7 +25,6 @@
   "scripts": {
     "build": "vite build --config ../../build/vite.component.mjs",
     "dev": "vite build --watch --config ../../build/vite.component.mjs",
-    "test": "vitest run --root ../..",
     "prepublishOnly": "pnpm build"
   },
   "keywords": [

@@ -18,8 +18,8 @@ export default defineConfig({
     // 类型声明：从 TS 源码生成 .d.ts 到 dist/（rollup 方案靠 tsc emit，此处等价替代）
     dts({
       outDir: 'dist',
-      // 声明文件里 SCSS 导入保持原样（与原 tsc emit 行为一致）
-      originalFileName: true,
+      // 测试文件不产出声明，避免污染发布物
+      exclude: ['**/*.test.{ts,tsx}', '**/*.spec.{ts,tsx}'],
     }),
   ],
   build: {

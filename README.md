@@ -3,50 +3,57 @@
 React + TypeScript 前端 monorepo，基于 **pnpm workspaces** 管理。
 
 - `pages/` —— 页面应用（**Vite** 打包 + React），不发布
-- `components/` —— 公共组件（**Rollup** 打包，样式用 **SCSS**），**每个组件是一个独立 package，可独立构建、独立版本、独立发包**
+- `components/` —— 公共组件（**Vite library mode** 打包，样式用 **SCSS**），**每个组件是一个独立 package，可独立构建、独立版本、独立发包**
 
-设计原则：**配置与通用依赖统一收敛到根目录**，子包只保留自身源码和薄薄的描述文件。
+设计原则：**构建配置与依赖版本统一收敛到根目录**，子包只保留自身源码和薄薄的描述文件；依赖关系在各子包 `package.json` 中**显式声明**（版本号由根 catalog 统一）。
 
 ## 目录结构
 
 ```
 .
-├── pnpm-workspace.yaml          # workspace 声明：pages/* 与 components/*
-├── package.json                 # 根工程（private）：统一脚本 + 全部通用依赖
-├── tsconfig.base.json           # 唯一的 TS 配置，所有子包都 extends 它
+├── pnpm-workspace.yaml          # workspace 声明 + catalog 版本表（pages/* 与 components/*）
+├── package.json                 # 根工程（private）：统一脚本 + 共享工具链依赖
+├── tsconfig.base.json           # 唯一的 TS 基础配置，所有子包都 extends 它
 ├── build/
-│   ├── rollup.component.mjs     # 所有 components/* 共用的 Rollup 构建配置
-│   └── vite.page.mjs            # 所有 pages/* 共用的 Vite 配置
+│   ├── vite.component.mjs       # 所有 components/* 共用的 Vite library mode 构建配置
+│   └── vite.page.mjs            # 所有 pages/* 共用的 Vite 应用配置
 ├── scripts/
 │   ├── build.mjs                # 选择性构建：交互/关键字选包 + 依赖影响面分析
 │   └── dev.mjs                  # 选择页面启动：构建组件 + 起 vite + 打开浏览器
+├── eslint.config.mjs            # ESLint 9 flat config（TS/TSX + Node 脚本）
+├── .stylelintrc.json            # Stylelint（standard-scss）
+├── .prettierrc.json             # Prettier 格式
+├── .lintstagedrc.json           # lint-staged：暂存文件提交前自动修
+├── vitest.config.mjs            # Vitest（jsdom + Testing Library）
+├── .husky/                      # git 钩子（pre-commit → lint-staged）
+├── .changeset/                  # changesets 版本与发布配置
 ├── components/
 │   ├── button/                  # @ai-test/button（独立发包）
-│   │   ├── src/                 #   Button.tsx / button.scss / index.ts
+│   │   ├── src/                 #   Button.tsx / Button.test.tsx / button.scss / index.ts
 │   │   ├── tsconfig.json        #   薄壳：{ "extends": "../../tsconfig.base.json" }
-│   │   └── package.json         #   包元信息 + peerDeps（react），无本地 devDeps
+│   │   └── package.json         #   包元信息 + peerDeps（react）
 │   └── input/                   # @ai-test/input（结构同上）
 └── pages/
     ├── playground/              # @ai-test/playground（组件演示页）
     │   ├── index.html
     │   ├── src/                 # 页面源码 + app.scss，以 workspace:* 消费组件
     │   ├── tsconfig.json        # 薄壳：{ "extends": "../../tsconfig.base.json" }
-    │   └── package.json         # 声明 workspace 组件依赖
+    │   └── package.json         # 显式声明 react / 自研组件依赖
     └── upload/                  # @ai-test/upload-page（antd 文件上传页）
         ├── index.html
         └── src/                 # App.tsx：Upload.Dragger 选文件 + 确定提交
 ```
 
-> 页面统一用 **antd** 构建 UI（antd / @ant-design/icons 已在根 devDependencies 统一管理，
-> React 19 下页面入口先 `import '@ant-design/v5-patch-for-react-19'`）。
+> 页面统一用 **antd** 构建 UI（antd / @ant-design/icons 版本由根 catalog 统一），
+> React 19 下页面入口先 `import '@ant-design/v5-patch-for-react-19'`。
 
 子包脚本通过相对路径引用根目录的共享配置：
 
 ```jsonc
 // components/xxx/package.json
 "scripts": {
-  "build": "rollup -c ../../build/rollup.component.mjs",
-  "dev":   "rollup -c ../../build/rollup.component.mjs -w"
+  "build": "vite build --config ../../build/vite.component.mjs",
+  "dev":   "vite build --watch --config ../../build/vite.component.mjs"
 }
 
 // pages/xxx/package.json
@@ -60,35 +67,40 @@ React + TypeScript 前端 monorepo，基于 **pnpm workspaces** 管理。
 
 ## 依赖管理约定
 
-**通用依赖统一放在根 `package.json`，子包不再重复声明**；按是否进入运行时产物分类：
+依赖版本**只在根 `pnpm-workspace.yaml` 的 `catalog:` 表里维护一份**，子包用 `"catalog:" 引用，既统一版本又让依赖关系显式可见：
 
-- 根 **`dependencies`（运行时，会被 import / 打进产物）**：
-  `react`、`react-dom`、`antd`、`@ant-design/icons`、`@ant-design/v5-patch-for-react-19`
-- 根 **`devDependencies`（仅构建/开发时需要）**：
-  构建工具链 `rollup` 及插件、`vite`、`@vitejs/plugin-react`、`typescript`、`tslib`、
-  样式编译 `sass`、类型 `@types/react`、`@types/react-dom`
-
-子包只声明**各自特有**的依赖：
+```yaml
+# pnpm-workspace.yaml
+catalog:
+  react: ^19.2.8
+  antd: ^5.29.3
+  vite: ^6.4.3
+  # ...
+```
 
 - **组件包**：只保留 `peerDependencies`（react/react-dom，作为发布元数据告知宿主），
-  不写 `dependencies`/`devDependencies`——工具链与 react 都由根提供
-- **页面包**：`dependencies` 里写 `"@ai-test/xxx": "workspace:*"`（引用自研组件）；
-  antd / react 等通用库直接用根提供的，无需在子包声明
+  react 不打进产物；构建工具链由根 devDependencies 提供。
+- **页面包**：用到的运行时库**显式声明**且走 catalog——
+  `"react": "catalog:"`、`"antd": "catalog:"`、自研组件 `"@ai-test/xxx": "workspace:*"`；
+  类型包放该页 `devDependencies`（`"@types/react": "catalog:"`）。
+- **根 package.json**：放全仓共享的工具链（vite、typescript、eslint、vitest、sass 等）。
 
-> 说明：react / antd 这类运行时库放根 `dependencies` 而非 `devDependencies`，
-> 语义上它们是应用运行所需，不是构建工具。根包本身 `private` 不发布，
-> 靠 pnpm 提升让各子包解析到；组件发布时 react 仍是 peerDependency，不会打进产物。
-> 生产环境只安装 dependencies（`pnpm install --prod`）即可运行，工具链不进运行时。
+> 根包 `private` 不发布。组件发布时 react 走 peerDependency，不会打进产物。
 
 ## 环境要求
 
 - Node >= 18
-- pnpm >= 7（`npm i -g pnpm`）
+- pnpm >= 9（lockfile 为 9.0 格式）。推荐用 corepack 自动启用根 `packageManager` 锁定的版本：
+
+```bash
+corepack enable      # 首次：启用 corepack
+corepack prepare pnpm@9.15.9 --activate   # 或直接 pnpm install，corepack 会按 packageManager 字段切换
+```
 
 ## 快速开始
 
 ```bash
-pnpm install          # 安装全部依赖并链接 workspace 包
+pnpm install          # 安装全部依赖并链接 workspace 包（会自动执行 husky 初始化钩子）
 
 pnpm build:components # 先构建组件包（产物在各包 dist/）
 pnpm dev              # 启动 pages 开发服务（Vite，默认 http://localhost:5173）
@@ -108,7 +120,39 @@ pnpm dev              # 启动 pages 开发服务（Vite，默认 http://localho
 | `pnpm build:pages`             | 只构建 pages 下所有应用                                |
 | `pnpm dev:page`                | **交互式选择一个页面**，自动构建组件后启动并打开浏览器 |
 | `pnpm dev`                     | 先构建组件，再并行启动各包 dev                         |
+| `pnpm test`                    | 运行全部单元测试（Vitest，单次）                       |
+| `pnpm test:watch`              | 监听模式跑测试                                         |
+| `pnpm lint`                    | ESLint + Stylelint 全仓检查                            |
+| `pnpm lint:fix`                | ESLint + Stylelint 自动修复                            |
+| `pnpm format`                  | Prettier 格式化全仓                                    |
+| `pnpm format:check`            | Prettier 校验（不写）                                  |
+| `pnpm typecheck`               | 所有子包 `tsc --noEmit`                                |
+| `pnpm changeset`               | 记录一条组件变更（选包 + semver + 说明）               |
 | `pnpm --filter <pkg> <script>` | 对单个包执行脚本                                       |
+
+## 质量工程
+
+仓库内置一套前端质量门禁，配置全部在根目录：
+
+- **ESLint 9**（`eslint.config.mjs`，flat config）：`typescript-eslint` recommended +
+  `react-hooks` + `react-refresh` 规则；Node 脚本与浏览器代码分别套 globals。
+- **Stylelint**（`.stylelintrc.json`）：`stylelint-config-standard-scss`，校验 SCSS。
+- **Prettier**（`.prettierrc.json`）：统一格式；与 ESLint 通过 `eslint-config-prettier` 解耦，
+  格式归 Prettier、代码质量归 ESLint。
+- **husky + lint-staged**：`pre-commit` 钩子对**暂存文件**自动跑
+  ESLint/Stylelint `--fix` + Prettier（`.lintstagedrc.json`），不通过无法提交。
+  钩子由 `prepare` 脚本在 `pnpm install` 后自动安装。
+- **Vitest + Testing Library**（`vitest.config.mjs`）：组件单元测试与源码同目录
+  （`src/*.test.tsx`），jsdom 环境。测试文件不进入组件发布产物。
+
+```bash
+pnpm test          # 跑测试
+pnpm lint          # 全量 lint
+pnpm format        # 全量格式化
+```
+
+> 新增组件时，建议在 `src/` 下补 `<Name>.test.tsx`，用 Testing Library 断言类名、
+> 变体与原生属性透传。
 
 ### 选择页面启动（`pnpm dev:page`）
 
@@ -167,24 +211,26 @@ import './app.scss' // 页面自己的 SCSS，Vite 直接编译
 
 1. 建目录 `components/<name>/src/`，写组件代码并从 `src/index.ts` 导出（样式用 `.scss`）
 2. 加 `package.json`：包名 `@ai-test/<name>`、`exports`/`files` 等元信息、
-   `peerDependencies`（react），scripts 直接复制现有组件（引用根 rollup 配置）
+   `peerDependencies`（react），scripts 直接复制现有组件（引用根 vite 组件配置）
 3. 加 `tsconfig.json`：内容为 `{ "extends": "../../tsconfig.base.json", "include": ["src"] }`
-4. 使用方 package.json 加 `"@ai-test/<name>": "workspace:*"`，执行 `pnpm install`
-5. `pnpm --filter @ai-test/<name> build`
+4. （可选）补 `src/<Name>.test.tsx` 单元测试
+5. 使用方 package.json 加 `"@ai-test/<name>": "workspace:*"`，执行 `pnpm install`
+6. `pnpm --filter @ai-test/<name> build`
 
-组件包构建约定（由根 `build/rollup.component.mjs` 统一保证）：
+组件包构建约定（由根 `build/vite.component.mjs` 统一保证）：
 
-- Rollup 产出 ESM + CJS + `.d.ts` + sourcemap
-- `rollup-plugin-postcss` + `sass` 把 SCSS 编译抽取为独立 `dist/index.css`
+- Vite library mode 产出 ESM（`index.js`）+ CJS（`index.cjs`）+ sourcemap
+- SCSS 经 Vite 抽取为独立 `dist/index.css`（发布物是编译后的纯 CSS，消费方无需配 sass）
+- `.d.ts` 由 `vite-plugin-dts` 生成到 `dist/`（自动排除测试文件）
 - react/react-dom external，不打进产物
-- 发布物是编译后的纯 CSS，消费方无需配 sass
 
 ## 新增一个页面
 
 1. 建目录 `pages/<name>/`，放 `index.html` 和 `src/`
 2. 加 `package.json`（参考现有页面，scripts 引用根 vite 配置）；
-   用到自研组件时 `dependencies` 写 `"@ai-test/xxx": "workspace:*"`，
-   antd 等通用库无需在子包声明（根已统一提供）
+   用到的运行时依赖**显式声明且走 catalog**：
+   自研组件 `"@ai-test/xxx": "workspace:*"`，`react`/`antd` 等写 `"react": "catalog:"`，
+   类型包放 `devDependencies`（`"@types/react": "catalog:"`）
 3. 加 `tsconfig.json`：`{ "extends": "../../tsconfig.base.json", "include": ["src"] }`
 4. `pnpm install && pnpm --filter <包名> dev`
 
@@ -221,14 +267,20 @@ const UPLOAD_URL = '/api/upload' // 改成你的上传接口
 
 启动：`pnpm --filter @ai-test/upload-page dev`（默认 http://localhost:5173）。
 
-## 发布组件包
+## 发布组件包（changesets）
+
+版本与发布用 [changesets](https://github.com/changesets/changesets) 管理，
+页面应用是 private 包，已在 `.changeset/config.json` 的 `ignore` 中排除：
 
 ```bash
-# 1. 更新版本号
-pnpm --filter @ai-test/button version patch   # 或 minor / major
+# 1. 改动组件后，记录一条变更（交互式选择包 + semver 级别 + 说明），生成的 *.md 随代码提交
+pnpm changeset
 
-# 2. 发布（prepublishOnly 会自动先 build）
-pnpm --filter @ai-test/button publish
+# 2. 发布前：消费所有变更集，自动 bump 版本号并生成各包 CHANGELOG.md
+pnpm changeset version
+
+# 3. 构建组件产物并发布到 registry
+pnpm release
 ```
 
 发包前本地校验包内容：

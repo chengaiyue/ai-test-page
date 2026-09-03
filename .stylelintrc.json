@@ -1,5 +1,5 @@
 {
-  "extends": ["stylelint-config-standard-scss", "@stylistic/stylelint-config"],
+  "extends": ["stylelint-config-standard-scss"],
   "ignoreFiles": ["**/dist/**", "**/node_modules/**", "**/coverage/**"],
   "rules": {
     "scss/dollar-variable-empty-line-before": null,
